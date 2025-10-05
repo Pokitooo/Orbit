@@ -11,7 +11,7 @@
 
 #include <TinyGPS++.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_H3LIS331.h>
+#include <Adafruit_LIS331HH.h>
 #include <Adafruit_BME280.h>
 #include <Servo.h>
 
@@ -41,7 +41,7 @@ bool enable_buzzer = true;
 // i2c
 TwoWire i2c1(PIN_SDA, PIN_SCL);
 Adafruit_BME280 bme1;
-Adafruit_H3LIS331 imu = Adafruit_H3LIS331();
+Adafruit_LIS331HH imu = Adafruit_LIS331HH();
 
 // UARTS
 HardwareSerial gnssSerial(PIN_RX, PIN_TX);
@@ -277,7 +277,7 @@ void setup()
     delay(2000);
 
     i2c1.begin();
-    i2c1.setClock(300000u);
+    i2c1.setClock(100000u);
 
     spi1.begin();
 
@@ -287,17 +287,6 @@ void setup()
     pinMode(ledPin3, OUTPUT); // LED
     pinMode(ledPin4, OUTPUT); // LED
 
-    digitalWrite(ledPin1, HIGH);
-    digitalWrite(ledPin2, HIGH);
-    digitalWrite(ledPin3, HIGH);
-    digitalWrite(ledPin4, HIGH);
-    delay(200); // 200 ms ON
-
-    // Turn all LEDs OFF
-    digitalWrite(ledPin1, LOW);
-    digitalWrite(ledPin2, LOW);
-    digitalWrite(ledPin3, LOW);
-    digitalWrite(ledPin4, LOW);
     // variable
     static bool state;
 
@@ -349,8 +338,8 @@ void setup()
     pvalid.imu = imu.begin_I2C(0x18, &i2c1);
     if (pvalid.imu)
     {
-        imu.setRange(H3LIS331_RANGE_400_G); // 6, 12, or 24 G
-        imu.setDataRate(LIS331_DATARATE_1000_HZ);
+        imu.setRange(LIS331HH_RANGE_24_G); 
+        imu.setDataRate(LIS331_DATARATE_100_HZ);
         digitalWrite(ledPin3, 1);
     }
 
@@ -369,6 +358,7 @@ void setup()
             read_bme(&bme_ref);
         }
         gnd += data.altitude;
+        digitalWrite(ledPin4, 1);
     }
     ground_truth.altitude_offset = gnd;
 
@@ -423,13 +413,19 @@ void setup()
 
                << task_type(read_gnss, 100ul, millis, 2)
 
-               << task_type(transmit_receive_data, 1000ul, millis, 252)
-               //    << task_type(print_data, 1000ul, millis, 253)
+            //    << task_type(transmit_receive_data, 1000ul, millis, 252)
+               << task_type(print_data, 1000ul, millis, 253)
                << task_type(construct_data, 25ul, millis, 254)
                << (task_type(save_data, &log_interval, 255), pvalid.sd);
 
     // Low power mode
     // LowPower.begin();
+
+    digitalWrite(ledPin1, 0);
+    digitalWrite(ledPin2, 0);
+    digitalWrite(ledPin3, 0);
+    digitalWrite(ledPin4, 0);
+
     dispatcher.reset();
 }
 
@@ -485,9 +481,8 @@ void read_imu()
 {
     static uint32_t t_prev = millis();
 
-    imu.read(); // get X Y and Z data at once
+    imu.read();
 
-    /* Or....get a new sensor event, normalized */
     sensors_event_t event;
     imu.getEvent(&event);
 

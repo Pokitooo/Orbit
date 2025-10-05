@@ -33,14 +33,6 @@ constexpr uint32_t ledPin2 = PB14;
 constexpr uint32_t ledPin3 = PB13;
 constexpr uint32_t ledPin4 = PC13;
 
-// constexpr uint32_t servoPinA = PA1;
-// constexpr uint32_t servoPinB = PA2;
-
-// CURRENT ADC
-// constexpr uint32_t VOUT_EXT = PB1;
-// constexpr uint32_t VOUT_Servo = PA3;
-// constexpr uint32_t VMON = PB4;
-
 constexpr auto PINS_OFF = []
 {
     // gpio_write << io_function::pull_low(ledPin);
